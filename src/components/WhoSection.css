@@ -1,0 +1,75 @@
+.who-section {
+  background: var(--light);
+}
+
+.who-section__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5rem;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.who-section__note {
+  font-size: 0.9rem;
+  color: var(--muted);
+  line-height: 1.8;
+  max-width: 480px;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+/* ─── Outcome Cards ───────────────────────────────────────────── */
+.who-section__right {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.outcome-card {
+  background: var(--cream);
+  padding: 1.5rem 1.3rem;
+  border-radius: var(--radius-sm);
+  border-left: 2px solid var(--gold);
+  transition: transform var(--transition-base), box-shadow var(--transition-base), border-color var(--transition-base);
+  cursor: default;
+}
+
+.outcome-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+  border-left-color: var(--gold3);
+  background: #fff;
+}
+
+.outcome-card__label {
+  font-size: 0.68rem;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.outcome-card__text {
+  font-size: 0.87rem;
+  color: var(--navy);
+  line-height: 1.6;
+  font-weight: 500;
+}
+
+/* ─── Responsive ──────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .who-section__grid {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+}
+
+@media (max-width: 520px) {
+  .who-section__right {
+    grid-template-columns: 1fr;
+  }
+}
