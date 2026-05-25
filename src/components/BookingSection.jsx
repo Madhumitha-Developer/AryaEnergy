@@ -11,7 +11,7 @@ const SERVICES = [
 
 const MONTHS       = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const TIMES        = ['9:00 AM','10:00 AM','11:30 AM','1:00 PM','2:30 PM','4:00 PM'];
-const AVAILABLE_DAYS = new Set([3,5,7,8,12,13,14,15,19,20,21,22,26,27,28]);
+// All days are bookable — weekdays and weekends alike
 const DAY_NAMES    = ['Su','Mo','Tu','We','Th','Fr','Sa'];
 const API_BASE     = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -59,7 +59,7 @@ export default function BookingSection() {
   }, [month, year]);
 
   const isPast      = (day) => { const d = new Date(year, month, day); const t = new Date(); t.setHours(0,0,0,0); return d < t; };
-  const isAvailable = (day) => AVAILABLE_DAYS.has(day) && !isPast(day);
+  const isAvailable = (day) => { const dow = new Date(year, month, day).getDay(); return dow !== 0 && dow !== 6 && !isPast(day); }; // weekdays only (Mon–Fri)
 
   // ── Reset to fresh booking ────────────────────────────────────────
   const resetAll = () => {
