@@ -9,11 +9,21 @@ const SERVICES = [
   { name: 'Framework Implementation',   duration: 'Full-day', price: 'Custom' },
 ];
 
-const MONTHS       = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-const TIMES        = ['9:00 AM','10:00 AM','11:30 AM','1:00 PM','2:30 PM','4:00 PM'];
-// All days are bookable — weekdays and weekends alike
-const DAY_NAMES    = ['Su','Mo','Tu','We','Th','Fr','Sa'];
-const API_BASE     = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const MONTHS    = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const TIMES     = ['9:00 AM','10:00 AM','11:30 AM','1:00 PM','2:30 PM','4:00 PM'];
+const DAY_NAMES = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+const API_BASE  = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
+/**
+ * Parses "9:00 AM" / "1:00 PM" into { hours, minutes } in 24-hour format.
+ */
+const parseTimeSlot = (timeStr) => {
+  const [time, period] = timeStr.split(' ');
+  let [hours, minutes] = time.split(':').map(Number);
+  if (period === 'PM' && hours !== 12) hours += 12;
+  if (period === 'AM' && hours === 12) hours = 0;
+  return { hours, minutes };
+};
 
 export default function BookingSection() {
   const ref   = useFadeRef();
@@ -27,13 +37,13 @@ export default function BookingSection() {
 
   // Confirmation state
   const [confirmed,        setConfirmed]        = useState(false);
-  const [bookingId,        setBookingId]        = useState(null);   // ID returned from POST
-  const [confirmedDetails, setConfirmedDetails] = useState(null);   // { service, date, time }
+  const [bookingId,        setBookingId]        = useState(null);
+  const [confirmedDetails, setConfirmedDetails] = useState(null);
 
   // Reschedule state
-  const [rescheduling,     setRescheduling]     = useState(false);  // show calendar again
-  const [rescheduling_,    setRescheduling_]    = useState(false);  // API in flight
-  const [rescheduleError,  setRescheduleError]  = useState('');
+  const [rescheduling,    setRescheduling]    = useState(false);
+  const [rescheduling_,   setRescheduling_]   = useState(false);
+  const [rescheduleError, setRescheduleError] = useState('');
 
   // Detail modal state
   const [showModal,   setShowModal]   = useState(false);
@@ -59,7 +69,24 @@ export default function BookingSection() {
   }, [month, year]);
 
   const isPast      = (day) => { const d = new Date(year, month, day); const t = new Date(); t.setHours(0,0,0,0); return d < t; };
-  const isAvailable = (day) => { const dow = new Date(year, month, day).getDay(); return dow !== 0 && dow !== 6 && !isPast(day); }; // weekdays only (Mon–Fri)
+  const isAvailable = (day) => { const dow = new Date(year, month, day).getDay(); return dow !== 0 && dow !== 6 && !isPast(day); };
+
+  /**
+   * Returns true if this time slot has already passed on the selected day.
+   * On future days, all slots are available. On today, only slots after the
+   * current time are available.
+   */
+  const isSlotPast = (day, timeStr) => {
+    const now = new Date();
+    // If not today, never past
+    if (year !== now.getFullYear() || month !== now.getMonth() || day !== now.getDate()) {
+      return false;
+    }
+    const { hours, minutes } = parseTimeSlot(timeStr);
+    const slotMinutes = hours * 60 + minutes;
+    const nowMinutes  = now.getHours() * 60 + now.getMinutes();
+    return slotMinutes <= nowMinutes;
+  };
 
   // ── Reset to fresh booking ────────────────────────────────────────
   const resetAll = () => {
@@ -101,6 +128,8 @@ export default function BookingSection() {
       }
       setConfirmedDetails({ ...confirmedDetails, date: newDate, time: newTime });
       setRescheduling(false);
+      setSelDay(null);
+      setSelSlot(null);
     } catch (err) {
       setRescheduleError(err.message);
     } finally {
@@ -206,22 +235,39 @@ export default function BookingSection() {
           );
         })}
       </div>
-      {selDay && (
-        <div className="time-slots">
-          <div className="time-slots__label">Available times — {MONTHS[month]} {selDay}</div>
-          <div className="slots-grid">
-            {TIMES.map((t) => (
-              <button key={t} className={`slot${selSlot === t ? ' slot--selected' : ''}`} onClick={() => setSelSlot(t)}>{t}</button>
-            ))}
+      {selDay && (() => {
+        const availableSlots = TIMES.filter((t) => !isSlotPast(selDay, t));
+        return (
+          <div className="time-slots">
+            <div className="time-slots__label">Available times — {MONTHS[month]} {selDay}</div>
+            <div className="slots-grid">
+              {TIMES.map((t) => {
+                const slotPast = isSlotPast(selDay, t);
+                return (
+                  <button
+                    key={t}
+                    className={`slot${selSlot === t ? ' slot--selected' : ''}${slotPast ? ' slot--past' : ''}`}
+                    onClick={() => !slotPast && setSelSlot(t)}
+                    disabled={slotPast}
+                    title={slotPast ? 'This time has already passed' : undefined}
+                  >
+                    {t}
+                  </button>
+                );
+              })}
+            </div>
+            {availableSlots.length === 0 && (
+              <p className="slots-all-past">All time slots for today have passed. Please select another day.</p>
+            )}
+            {extraError && <div className="booking-error">{extraError}</div>}
+            <button className="book-btn" disabled={!selSlot || confirmDisabled} onClick={onConfirm}>
+              {confirmDisabled
+                ? <span className="modal__spinner" />
+                : confirmLabel}
+            </button>
           </div>
-          {extraError && <div className="booking-error">{extraError}</div>}
-          <button className="book-btn" disabled={!selSlot || confirmDisabled} onClick={onConfirm}>
-            {confirmDisabled
-              ? <span className="modal__spinner" />
-              : confirmLabel}
-          </button>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 

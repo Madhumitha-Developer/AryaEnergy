@@ -7,6 +7,7 @@ import ServicesSection from './components/ServicesSection';
 import FrameworkSection from './components/FrameworkSection';
 import TeamsSection from './components/TeamsSection';
 import PodcastSection from './components/PodcastSection';
+import GallerySection from './components/GallerySection';
 import BookingSection from './components/BookingSection';
 import Footer from './components/Footer';
 import AboutPage from './components/AboutPage';
@@ -57,6 +58,7 @@ export default function App() {
           <FrameworkSection />
           <TeamsSection />
           <PodcastSection />
+          <GallerySection />
           <BookingSection
             confirmed={confirmed}
             setConfirmed={setConfirmed}
